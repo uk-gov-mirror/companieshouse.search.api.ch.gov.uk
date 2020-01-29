@@ -22,10 +22,7 @@ import uk.gov.companieshouse.search.api.service.search.SearchRequestService;
 import uk.gov.companieshouse.search.api.service.rest.RestClientService;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static uk.gov.companieshouse.search.api.SearchApiApplication.APPLICATION_NAME_SPACE;
@@ -46,6 +43,11 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     private static final String ALPHABETICAL_SEARCH = "Alphabetical Search: ";
 
     private static final String SEARCH_TYPE = "alphabetical_search";
+    static final String SPACE_CHARACTER = " ";
+    static final String CORPORATE_NAME_ENDINGS[] = {
+            "LTD",
+            "LIMITED",
+    };
 
     /**
      * {@inheritDoc}
@@ -92,6 +94,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
                 searchResponse.getAggregations().asList(), corporateName);
         }
 
+        LOG.info("Found hits: " + searchResponse.getHits().getHits().length);
         if(highestMatchName != null) {
             return getSearchResults(highestMatchName, searchResponse.getHits(), corporateName);
         } else {
@@ -215,6 +218,14 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     }
 
 
+    private String stripCompanyEnding(String corporateName){
+        if (corporateName.contains(SPACE_CHARACTER) && Arrays.stream(CORPORATE_NAME_ENDINGS)
+                .anyMatch((e) -> corporateName.toUpperCase().endsWith(e))){
+            return corporateName.substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
+        }
+        return corporateName;
+    }
+
     private List<Company> getCompaniesFromSearchHits(SearchHits searchHits,
         String corporateName) throws ObjectMapperException {
 
@@ -237,9 +248,12 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
             companies.add(company);
         }
 
+        Comparator<Company> comparator
+                = (c1, c2) -> stripCompanyEnding(c1.getItems().getCorporateName()).compareTo(stripCompanyEnding(c2.getItems().getCorporateName()));
+
         // order the list in a natural order using Company compareTo
         return  companies.stream()
-            .sorted(Comparator.naturalOrder())
+            .sorted(comparator)
             .collect(Collectors.toList());
     }
 }

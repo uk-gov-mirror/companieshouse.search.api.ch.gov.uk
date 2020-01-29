@@ -1,16 +1,19 @@
 package uk.gov.companieshouse.search.api.service.search.impl.alphabetical;
 
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
+import uk.gov.companieshouse.search.api.model.alphakeyService.AlphaKeyResponse;
+import uk.gov.companieshouse.search.api.service.search.AlphaKeyService;
 import uk.gov.companieshouse.search.api.service.search.SearchRequestService;
 
 import java.util.Arrays;
@@ -22,6 +25,10 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
 
     @Autowired
     private EnvironmentReader environmentReader;
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private AlphaKeyService alphaKeyService;
 
     private static final String INDEX = "ALPHABETICAL_SEARCH_INDEX";
 
@@ -32,6 +39,8 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
     private static final String ALPHABETICAL_SEARCH = "Alphabetical Search: ";
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
+
+    static final String SPACE_CHARACTER = " ";
     static final String CORPORATE_NAME_ENDINGS[] = {
             "PCC LTD",
             "PCC LIMITED",
@@ -182,14 +191,14 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             "AND CO.",
             "AND CO.",
             "AND CO.LTD",
-            "&  CO. LIMITED",
+            "& CO. LIMITED",
             "& COMPANY",
             "& CO.LTD",
             "+ CO LLP",
             "& CO",
             "AND COMPANY P.L.C.",
             "CO.",
-            "COMPANY  LIMITED",
+            "COMPANY LIMITED",
             "& COMPANY",
             "CO",
             "& CO. LIMITED",
@@ -202,7 +211,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             "C.I.C",
             "COMPANY. LIMITED",
             "& COMPANY. LIMITED",
-            "AND COMPANY  LIMITED",
+            "AND COMPANY LIMITED",
             "COMPANY LIMITED",
             "COMPANY",
             "COMPANY LTD..",
@@ -218,17 +227,17 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             "CO",
             "& CO. PUBLIC LIMITED COMPANY",
             "&CO. LIMITED",
-            "& CO  LIMITED",
+            "& CO LIMITED",
             "& CO.LTD.",
             "& COMPANY LIMITED.",
-            "CO  LIMITED",
-            "& COMPANY  LIMITED",
-            "&  CO LIMITED",
-            "CO.  LIMITED",
+            "CO LIMITED",
+            "& COMPANY LIMITED",
+            "& CO LIMITED",
+            "CO. LIMITED",
             "CO.LTD.",
             "E.E.I.G.",
-            "CO  LTD",
-            "COMPANY  LTD",
+            "CO LTD",
+            "COMPANY LTD",
             "P.L.C",
             ",LIMITED",
             "COMPANY P.L.C",
@@ -363,24 +372,81 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
     }
 
     private String stripCompanyEnding(String corporateName){
-        // if corporateName has more than one word and the last word is any of the words contained in
-        // corporateNameEndings then strip the company name ending and return
-        if (corporateName.contains(" ") && Arrays.stream(CORPORATE_NAME_ENDINGS)
+        if (corporateName.contains(SPACE_CHARACTER) && Arrays.stream(CORPORATE_NAME_ENDINGS)
                 .anyMatch((e) -> corporateName.toUpperCase().endsWith(e))){
-            return corporateName.substring(0, corporateName.lastIndexOf(' '));
+            return corporateName.substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
         }
         return corporateName;
     }
 
-    private QueryBuilder createAlphabeticalSearchQuery(String corporateName) {
+    private char previousCharacter(char c){
+        int cint = (int)c;
+        if ((cint > 48 && cint < 57) || (cint > 65 && cint < 90) || (cint > 97 && cint < 122)) {
+            return (char) (cint - 1);
+        }
+        if (cint == 65 || cint == 97){
+            return '0';
+        }
+        else {
+            return c;
+        }
+    }
 
+    private QueryBuilder createAlphabeticalSearchQuery(String corporateName) {
         LOG.info(ALPHABETICAL_SEARCH + "Adding query for: " + corporateName);
 
-        String strippedCorporateName = stripCompanyEnding(corporateName);
+        AlphaKeyResponse alphaKeyResponse = alphaKeyService.getAlphaKeyForCorporateName(corporateName);
+        String corporateNameAlphaKey = alphaKeyResponse.getSameAsAlphaKey();
+        String corporateNameOrderedAlphaKey = alphaKeyResponse.getOrderedAlphaKey();
 
-        return QueryBuilders.boolQuery()
-                .should(QueryBuilders.queryStringQuery(strippedCorporateName).enablePositionIncrements(true)
-                        .allowLeadingWildcard(false).autoGenerateSynonymsPhraseQuery(false))
-                .should(QueryBuilders.matchQuery("items.corporate_name_start", strippedCorporateName).fuzziness(2));
+        LOG.info("Alpha key for corporate: " + corporateName + " : " + corporateNameAlphaKey);
+        LOG.info("Ordered alpha key for corporate: " + corporateName + " : " + corporateNameOrderedAlphaKey);
+
+        String corporateNameSansEnding = stripCompanyEnding(corporateName).toLowerCase();
+        String corporateNameFirstPart, corporateNamePrevious, corporateNamePrefix, corporateNameAlphaPrefix;
+        if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
+            corporateNameFirstPart = corporateNameSansEnding.substring(0, corporateNameSansEnding.indexOf(SPACE_CHARACTER));
+        }
+        else {
+            corporateNameFirstPart = corporateNameSansEnding;
+        }
+
+        if (corporateNameFirstPart.length() > 1){
+            corporateNamePrefix = corporateNameFirstPart.substring(0, corporateNameFirstPart.length()-1);
+            char prevChar = previousCharacter(corporateNameFirstPart.charAt(corporateNameFirstPart.length()-1));
+            corporateNamePrevious = corporateNamePrefix + prevChar;
+        }
+        else {
+            corporateNamePrefix = corporateNameFirstPart;
+            corporateNamePrevious = corporateNameFirstPart;
+        }
+
+        if (corporateNameAlphaKey.length() > 1) {
+            corporateNameAlphaPrefix = corporateNameAlphaKey.substring(0, corporateNameAlphaKey.length()-1);
+        }
+        else {
+            corporateNameAlphaPrefix = corporateNameAlphaKey;
+        }
+
+        BoolQueryBuilder query = QueryBuilders.boolQuery();
+        // DisMaxQueryBuilder query = QueryBuilders.disMaxQuery();
+        query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
+        query.should(QueryBuilders.prefixQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
+        query.should(QueryBuilders.wildcardQuery("items.alpha_key", corporateNameAlphaPrefix + "*"));
+        query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNamePrefix + ")([0-1])*([a-cA-C~l])*.*"));
+        if (corporateNamePrefix.length() > 1) {
+            query.should(QueryBuilders.matchQuery("items.corporate_name_start", corporateNamePrevious));
+        }
+        query.should(QueryBuilders.matchQuery("items.corporate_name_start", corporateNameFirstPart));
+        //works
+        //query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameFirstPart + ")([0-1])*([a-cA-C~l])*.*"));
+        if (corporateNameFirstPart.length() > 1) {
+            query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameFirstPart + "a)([0-1])*([a-cA-C~l])*.*"));
+        }
+        // works
+        //query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~(.+)" + corporateNameFirstPart + ".*"));
+        query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNamePrefix + "([^ ]).*"));
+
+        return query;
     }
 }
