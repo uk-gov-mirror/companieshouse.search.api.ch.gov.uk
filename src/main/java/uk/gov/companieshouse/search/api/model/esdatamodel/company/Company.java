@@ -84,8 +84,8 @@ public class Company implements Comparable<Company> {
         String regexPattern = "[^A-Za-z]+";
         String replacement = "";
 
-        String a = items.getCorporateName().replace(regexPattern, replacement);
-        String b = argCompany.getItems().getCorporateName().replace(regexPattern, replacement);
+        String a = items.getCorporateName().replaceAll(regexPattern, replacement);
+        String b = argCompany.getItems().getCorporateName().replaceAll(regexPattern, replacement);
 
         return a.compareTo(b);
     }
