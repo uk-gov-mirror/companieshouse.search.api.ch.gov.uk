@@ -125,28 +125,26 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         SearchResults<Company> searchResults = new SearchResults();
 
         String bestMatchName = new String();
-        int highestMatchIndexPos = 0;
+        int bestMatchIndexPos = 0;
         List<Company> companies = getCompaniesFromSearchHits(searchHits, corporateName);
 
         /// find the company that matches exactly with the requested name
         for(Company company : companies) {
-            if (company.getItems().getCorporateName().startsWith(corporateName.toUpperCase() + " ")) {
+            if (company.getItems().getCorporateName().matches(stripCompanyEnding(corporateName).toUpperCase() + "([\\s?0-9A-Z])?.*")) {
                 bestMatchName = company.getItems().getCorporateName();
                 break;
             }
-            highestMatchIndexPos++;
+            bestMatchIndexPos++;
         }
-//        List<Company> orderedCompanies = companies.stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-//        System.out.println("##############  Ordered  ##############");
-//        orderedCompanies.stream()
-//                .forEach(c -> {System.out.println(c.getItems().getCorporateName());});
 
-        searchResults = getBestMatchSearchResults(companies, highestMatchIndexPos, bestMatchName);
+        searchResults = getBestMatchSearchResults(companies, bestMatchIndexPos, bestMatchName);
 
-        if (searchResults != null && searchResults.getResults() != null && searchResults.getResults().size() > 0) {
+        /// return results found around best match OR fall back to elasticsearch's highest match
+        if (searchResults != null && searchResults.getResults().size() > 0) {
             return searchResults;
         }
 
+        int highestMatchIndexPos = 0;
         // find the pos in the list of companies where the highest match is.
         for(Company company : companies) {
             if (company.getItems().getCorporateName().equals(highestMatchName)) {
@@ -263,20 +261,10 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         return corporateName;
     }
 
-    private Comparator<Company> companyNameComparator(){
-        return (c1, c2) -> stripCompanyEnding(c1.getItems().getCorporateName()).compareTo(stripCompanyEnding(c2.getItems().getCorporateName()));
-    }
-
     private Comparator<Company> companyNameNoSpacesComparator(){
         String pattern = "[^A-Za-z]+";
         String replacement = "";
-        return Comparator.comparing(c -> c.getItems().getCorporateName().replaceAll(pattern, replacement));
-    }
-
-    private Comparator<Company> companyNameNoSpacesLengthComparator(){
-        String pattern = "[^A-Za-z]+";
-        String replacement = "";
-        return Comparator.comparing(c -> c.getItems().getCorporateName().replaceAll(pattern, replacement).length());
+        return Comparator.comparing(c -> stripCompanyEnding(c.getItems().getCorporateName()).replaceAll(pattern, replacement));
     }
 
     private List<Company> getCompaniesFromSearchHits(SearchHits searchHits,
@@ -301,23 +289,15 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
             companies.add(company);
         }
 
-        Comparator<Company> comparator
-                = (c1, c2) -> stripCompanyEnding(c1.getItems().getCorporateName()).compareTo(stripCompanyEnding(c2.getItems().getCorporateName()));
-
         System.out.println("##############  " + corporateName + "  ##############");
         companies.stream()
                 .filter(c -> c.getItems().getCorporateName().startsWith(corporateName.toUpperCase().substring(0,1)))
-                //.sorted(Comparator.naturalOrder())
-                .sorted(companyNameComparator())
-                //.sorted(companyNameNoSpacesComparator().thenComparing(companyNameNoSpacesLengthComparator()))
+                .sorted(companyNameNoSpacesComparator())
                 .forEach(c -> {System.out.println(c.getItems().getCorporateName());});
 
-        // order the list in a natural order using Company compareTo
         return  companies.stream()
                 .filter(c -> c.getItems().getCorporateName().startsWith(corporateName.toUpperCase().substring(0,1)))
-                //.sorted(Comparator.naturalOrder())
-                .sorted(companyNameComparator())
-                //.sorted(companyNameNoSpacesComparator().thenComparing(companyNameNoSpacesLengthComparator()))
+                .sorted(companyNameNoSpacesComparator())
             .collect(Collectors.toList());
     }
 }
