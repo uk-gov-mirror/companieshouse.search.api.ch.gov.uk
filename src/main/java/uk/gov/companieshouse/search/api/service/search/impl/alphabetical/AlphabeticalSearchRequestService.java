@@ -41,10 +41,10 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    private static final String SPECIAL_CHARACTERS = "*!";
     private static final String SPACE_CHARACTER = " ";
-    private static final String COMPANY_NAME_ENDINGS = "AEIE | ANGHYFYNGEDIG | C.B.C | C.B.C. | C.C.C | C.C.C. | C.I.C. " +
-            "| CBC | CBCN | CBP | CCC | CCG CYF | CCG CYFYNGEDIG | CIC | COMMUNITY INTEREST COMPANY " +
+    // spaces around company endings help in finding exact matches
+    private static final String COMPANY_NAME_ENDINGS = " AEIE | ANGHYFYNGEDIG | C.B.C | C.B.C. | C.C.C | C.C.C. " +
+            "| C.I.C. | CBC | CBCN | CBP | CCC | CCG CYF | CCG CYFYNGEDIG | CIC | COMMUNITY INTEREST COMPANY " +
             "| COMMUNITY INTEREST P.L.C. | COMMUNITY INTEREST PLC | COMMUNITY INTEREST PUBLIC LIMITED COMPANY " +
             "| CWMNI BUDDIANT CYMUNEDOL | CWMNI BUDDIANT CYMUNEDOL C.C.C | CWMNI BUDDIANT CYMUNEDOL CCC " +
             "| CWMNI BUDDIANT CYMUNEDOL CYHOEDDUS CYFYNGEDIG | CWMNI BUDDSODDIA CHYFALAF NEWIDIOL " +
@@ -53,7 +53,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             "| INVESTMENT COMPANY WITH VARIABLE CAPITAL | L.P. | LIMITED | LIMITED LIABILITY PARTNERSHIP " +
             "| LIMITED PARTNERSHIP | LLP | LP | LTD | LTD. | OEIC | OPEN-ENDED INVESTMENT COMPANY | P.C. | P.L.C " +
             "| P.L.C. | PAC | PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG | PARTNERIAETH CYFYNGEDIG | PC | PCC LIMITED " +
-            "| PCC LTD | PLC | PROTECTED CELL COMPANY | PUBLIC LIMITED COMPANY | SE | UNLIMITED | UNLTD | UNLTD.";
+            "| PCC LTD | PLC | PROTECTED CELL COMPANY | PUBLIC LIMITED COMPANY | SE | UNLIMITED | UNLTD | UNLTD. ";
 
    /**
      * {@inheritDoc}
@@ -61,7 +61,8 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
     @Override
     public SearchRequest createSearchRequest(String corporateName, String requestId) {
 
-        LOG.info(ALPHABETICAL_SEARCH + "Creating search request for: " + corporateName + " for user with Id: " + requestId);
+        LOG.info(ALPHABETICAL_SEARCH + "Creating search request for: " + corporateName
+                + " for user with Id: " + requestId);
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.indices(environmentReader.getMandatoryString(INDEX));
@@ -94,7 +95,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         if (corporateName.contains(SPACE_CHARACTER)){
             int corpNameEndingStart = corporateName.lastIndexOf(SPACE_CHARACTER);
             String corpNameEnding = corporateName.substring(corpNameEndingStart).trim().toUpperCase();
-            if (COMPANY_NAME_ENDINGS.contains(corpNameEnding)) {
+            if (COMPANY_NAME_ENDINGS.contains(" " + corpNameEnding.toUpperCase() + " ")) {
                 String corpNameSansEnding = corporateName.trim().substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
                 return corpNameSansEnding;
             }
@@ -107,8 +108,11 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         if ((cint > 48 && cint < 57) || (cint > 65 && cint < 90) || (cint > 97 && cint < 122)) {
             return (char) (cint - 1);
         }
-        if (cint == 65 || cint == 97){
-            return '9';
+        else if (cint == 65){
+            return 'Z';
+        }
+        else if (cint == 97){
+            return 'z';
         }
         else {
             return c;
@@ -118,36 +122,33 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
     private QueryBuilder createAlphabeticalSearchQuery(String corporateName) {
         LOG.info(ALPHABETICAL_SEARCH + "Building query for: " + corporateName);
 
-        // get alpha key variables for corporate name
+        // get alpha key value for corporate name
         AlphaKeyResponse alphaKeyResponse = alphaKeyService.getAlphaKeyForCorporateName(corporateName);
         String corporateNameAlphaKey = alphaKeyResponse.getSameAsAlphaKey();
-        String corporateNameOrderedAlphaKey = alphaKeyResponse.getOrderedAlphaKey();
 
-        LOG.info("Alpha key for corporate: " + corporateName + " : " + corporateNameAlphaKey);
-        LOG.info("Ordered alpha key for corporate: " + corporateName + " : " + corporateNameOrderedAlphaKey);
-
-        // strip company name ending
+        // Strip company name ending. Corporate name search against corporate_name_start works best in lower case.
         String corporateNameSansEnding = stripCorporateEnding(corporateName).toLowerCase();
-        int FUZZINESS = 1;
 
         String corporateNameFirstPart, corporateNamePrevious, corporateNamePrefix, corporateNameAlphaPrefix;
         if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
             corporateNameFirstPart = corporateNameSansEnding.substring(0, corporateNameSansEnding.indexOf(SPACE_CHARACTER));
-            FUZZINESS = 5;
         }
         else {
             corporateNameFirstPart = corporateNameSansEnding;
         }
+        final int CORP_NAME_SANS_ENDING_LENGTH = corporateNameSansEnding.length();
         final int CORP_NAME_FIRST_PART_LENGTH = corporateNameFirstPart.length();
 
-        if (CORP_NAME_FIRST_PART_LENGTH > 1){
-            corporateNamePrefix = corporateNameFirstPart.substring(0, corporateNameFirstPart.length()-1);
-            char prevChar = previousCharacter(corporateNameFirstPart.charAt(corporateNameFirstPart.length()-1));
+        // Calculate and apply a trailing previous character
+        // so matches above the best match are alphabetically descending
+        if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
+            corporateNamePrefix = corporateNameSansEnding.substring(0, CORP_NAME_SANS_ENDING_LENGTH-1);
+            char prevChar = previousCharacter(corporateNameSansEnding.charAt(CORP_NAME_SANS_ENDING_LENGTH-1));
             corporateNamePrevious = corporateNamePrefix + prevChar;
         }
         else {
-            corporateNamePrefix = corporateNameFirstPart;
-            char prevChar = previousCharacter(corporateNameFirstPart.charAt(0));
+            corporateNamePrefix = corporateNameSansEnding;
+            char prevChar = previousCharacter(corporateNameSansEnding.charAt(0));
             corporateNamePrevious = prevChar + "";
         }
 
@@ -163,7 +164,11 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
 
         BoolQueryBuilder query = QueryBuilders.boolQuery();
 
+        // add a wildcard query
         if (CORP_NAME_FIRST_PART_LENGTH == 1 && !corporateNameSansEnding.matches("([\\s?&?$?0-9a-zA-Z])+")) {
+            if (corporateNamePrefix.equals("*")){
+                corporateNamePrefix = "\\*";
+            }
             query.should(QueryBuilders.wildcardQuery("items.corporate_name_start", corporateNamePrefix + "*"));
         }
         else {
@@ -175,15 +180,15 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
 
         /// company name start
         query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNamePrefix + ")([0-1])*([a-cA-C])*.*"));
-        query.should(QueryBuilders.matchQuery("items.corporate_name_start", corporateNamePrevious).fuzziness(FUZZINESS));
-        query.should(QueryBuilders.matchQuery("items.corporate_name_start", corporateNameSansEnding + "a").fuzziness(FUZZINESS));
+        query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameSansEnding + "*"));
+        /// TODO corporateNamePrevious incorrect
+        query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNamePrevious + "*"));
+        query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameSansEnding + "a*"));
         if (CORP_NAME_FIRST_PART_LENGTH > 1) {
             query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameSansEnding + ")([0-1])*([a-cA-C])*.*"));
-            if (CORP_NAME_PREFIX_LENGTH > 4) {
-                corporateNamePrefix = corporateNamePrefix.substring(0, 4);
-            }
-            query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNamePrefix + "([^ ]).*").boost(5));
+            query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNamePrefix.substring(0, 2) + "([^ ]).*").boost(5));
         }
+        System.out.println(query.toString());
 
         return query;
     }

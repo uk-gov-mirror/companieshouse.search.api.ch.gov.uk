@@ -43,10 +43,11 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     private static final String ALPHABETICAL_SEARCH = "Alphabetical Search: ";
 
     private static final String SEARCH_TYPE = "alphabetical_search";
-    private static final String REGEX_OPERATORS = "+*^.$";
+    private static final String SPECIAL_CHARACTERS = "+*^.@&!?$£";
     private static final String SPACE_CHARACTER = " ";
-    private static final String COMPANY_NAME_ENDINGS = "AEIE | ANGHYFYNGEDIG | C.B.C | C.B.C. | C.C.C | C.C.C. | C.I.C. " +
-            "| CBC | CBCN | CBP | CCC | CCG CYF | CCG CYFYNGEDIG | CIC | COMMUNITY INTEREST COMPANY " +
+    // spaces around company endings help in finding exact matches
+    private static final String COMPANY_NAME_ENDINGS = " AEIE | ANGHYFYNGEDIG | C.B.C | C.B.C. | C.C.C | C.C.C. " +
+            "| C.I.C. | CBC | CBCN | CBP | CCC | CCG CYF | CCG CYFYNGEDIG | CIC | COMMUNITY INTEREST COMPANY " +
             "| COMMUNITY INTEREST P.L.C. | COMMUNITY INTEREST PLC | COMMUNITY INTEREST PUBLIC LIMITED COMPANY " +
             "| CWMNI BUDDIANT CYMUNEDOL | CWMNI BUDDIANT CYMUNEDOL C.C.C | CWMNI BUDDIANT CYMUNEDOL CCC " +
             "| CWMNI BUDDIANT CYMUNEDOL CYHOEDDUS CYFYNGEDIG | CWMNI BUDDSODDIA CHYFALAF NEWIDIOL " +
@@ -55,7 +56,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
             "| INVESTMENT COMPANY WITH VARIABLE CAPITAL | L.P. | LIMITED | LIMITED LIABILITY PARTNERSHIP " +
             "| LIMITED PARTNERSHIP | LLP | LP | LTD | LTD. | OEIC | OPEN-ENDED INVESTMENT COMPANY | P.C. | P.L.C " +
             "| P.L.C. | PAC | PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG | PARTNERIAETH CYFYNGEDIG | PC | PCC LIMITED " +
-            "| PCC LTD | PLC | PROTECTED CELL COMPANY | PUBLIC LIMITED COMPANY | SE | UNLIMITED | UNLTD | UNLTD.";
+            "| PCC LTD | PLC | PROTECTED CELL COMPANY | PUBLIC LIMITED COMPANY | SE | UNLIMITED | UNLTD | UNLTD. ";
 
     /**
      * {@inheritDoc}
@@ -139,11 +140,12 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         /// find the company that matches exactly with the requested name
         for(Company company : companies) {
             String strippedCorpName = stripCorporateEnding(corporateName);
-            if (REGEX_OPERATORS.contains(strippedCorpName)){
-                //strippedCorpName = "\\" + strippedCorpName;
+            // if this is a search for a special character (single letter)
+            if (SPECIAL_CHARACTERS.contains(strippedCorpName) || strippedCorpName.matches("([\\s+*^.$?@&!£]+)")){
                 bestMatchName = company.getItems().getCorporateName();
                 break;
             }
+            // find and return the first match amongst the es results
             if (company.getItems().getCorporateName()
                     .matches(strippedCorpName.toUpperCase() + "([\\s?0-9A-Z])?.*")) {
                 bestMatchName = company.getItems().getCorporateName();
@@ -271,7 +273,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         if (corporateName.contains(SPACE_CHARACTER)){
             int corpNameEndingStart = corporateName.lastIndexOf(SPACE_CHARACTER);
             String corpNameEnding = corporateName.substring(corpNameEndingStart).trim();
-            if (COMPANY_NAME_ENDINGS.contains(corpNameEnding.toUpperCase())) {
+            if (COMPANY_NAME_ENDINGS.contains(" " + corpNameEnding.toUpperCase() + " ")) {
                 String corpNameSansEnding = corporateName.trim().substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
                 return corpNameSansEnding;
             }
@@ -279,8 +281,16 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         return corporateName;
     }
 
+    // comparator to order strings ignoring whitespaces and special characters
     private Comparator<Company> companyNameNoSpacesComparator(){
         String pattern = "[^A-Za-z]+";
+        String replacement = "";
+        return Comparator.comparing(c -> stripCorporateEnding(c.getItems().getCorporateName()).replaceAll(pattern, replacement));
+    }
+
+    // comparator to order strings ignoring whitespaces
+    private Comparator<Company> companyNameSpecialCharsComparator(){
+        String pattern = "[^A-Za-z+$?.*^@&!£]+";
         String replacement = "";
         return Comparator.comparing(c -> stripCorporateEnding(c.getItems().getCorporateName()).replaceAll(pattern, replacement));
     }
@@ -296,8 +306,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
             Company company;
 
             try {
-                company = new ObjectMapper()
-                    .readValue(searchHit.getSourceAsString(), Company.class);
+                company = new ObjectMapper().readValue(searchHit.getSourceAsString(), Company.class);
             } catch (IOException e) {
                 LOG.error(ALPHABETICAL_SEARCH + "failed to map search hit to company object for: " + corporateName, e);
                 throw new ObjectMapperException("error occurred reading data for company from " +
@@ -307,24 +316,27 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
             companies.add(company);
         }
 
-        System.out.println("##############  " + corporateName + "  ##############");
-        if (stripCorporateEnding(corporateName).length() == 1) {
+        String corpNameFirstLetter = corporateName.toUpperCase().substring(0,1);
+
+        // if searching for single character
+        if (stripCorporateEnding(corporateName).length() == 1 && SPECIAL_CHARACTERS.contains(corpNameFirstLetter)) {
             companies.stream()
-                    .sorted(companyNameNoSpacesComparator())
+                    .sorted(companyNameSpecialCharsComparator())
                     .forEach(c -> {System.out.println(c.getItems().getCorporateName());});
 
             return companies.stream()
-                    .sorted(companyNameNoSpacesComparator())
+                    .sorted(companyNameSpecialCharsComparator())
                     .collect(Collectors.toList());
         }
+        System.out.println("##############  " + corporateName + "  ##############");
         companies.stream()
-                .filter(c -> c.getItems().getCorporateName().startsWith(corporateName.toUpperCase().substring(0,1)))
+                .filter(c -> c.getItems().getCorporateName().startsWith(corpNameFirstLetter))
                 .sorted(companyNameNoSpacesComparator())
                 .forEach(c -> {System.out.println(c.getItems().getCorporateName());});
 
 
         return companies.stream()
-                .filter(c -> c.getItems().getCorporateName().startsWith(corporateName.toUpperCase().substring(0,1)))
+                .filter(c -> c.getItems().getCorporateName().startsWith(corpNameFirstLetter))
                 .sorted(companyNameNoSpacesComparator())
             .collect(Collectors.toList());
     }
