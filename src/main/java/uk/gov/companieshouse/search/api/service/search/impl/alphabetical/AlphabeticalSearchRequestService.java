@@ -41,303 +41,21 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    static final String SPACE_CHARACTER = " ";
-    static final String CORPORATE_NAME_ENDINGS[] = {
-            "PCC LTD",
-            "PCC LIMITED",
-            "PROTECTED CELL COMPANY",
-            "+ COMPANY UNLTD",
-            "AND COMPANY LLP",
-            "AND COMPANY LTD",
-            "AND COMPANY PLC",
-            "COMPANY LIMITED",
-            "LIMITED COMPANY",
-            "& COMPANY UNLTD.",
-            "AND CO UNLIMITED",
-            "& COMPANY LIMITED",
-            "+ COMPANY UNLTD",
-            "AND COMPANY UNLTD",
-            "& COMPANY UNLIMITED",
-            "+ COMPANY LIMITED",
-            "AND COMPANY LIMITED",
-            "LIMITED PARTNERSHIP",
-            "LIMITED PARTNERSHIPS",
-            "AND COMPANY UNLIMITED",
-            "COMMUNITY INTEREST PLC",
-            "PUBLIC LIMITED COMPANY",
-            "COMMUNITY INTEREST P.L.C",
-            "CO PUBLIC LIMITED COMPANY",
-            "AND PUBLIC LIMITED COMPANY",
-            "COMMUNITY INTEREST COMPANY",
-            "& CO PUBLIC LIMITED COMPANY",
-            "+ CO PUBLIC LIMITED COMPANY",
-            "AND CO PUBLIC LIMITED COMPANY",
-            "LIMITED LIABILITY PARTNERSHIP",
-            "OPEN-ENDED INVESTMENT COMPANY",
-            "COMPANY PUBLIC LIMITED COMPANY",
-            "& COMPANY PUBLIC LIMITED COMPANY",
-            "+ COMPANY PUBLIC LIMITED COMPANY",
-            "CO LIMITED LIABILITY PARTNERSHIP",
-            "& CO LIMITED LIABILITY PARTNERSHIP",
-            "+ CO LIMITED LIABILITY PARTNERSHIP",
-            "AND COMPANY PUBLIC LIMITED COMPANY",
-            "EUROPEAN ECONOMIC INTEREST GROUPING",
-            "AND CO LIMITED LIABILITY PARTNERSHIP",
-            "COMPANY LIMITED LIABILITY PARTNERSHIP",
-            "& COMPANY LIMITED LIABILITY PARTNERSHIP",
-            "CO",
-            "LP",
-            "CBP",
-            "CIC",
-            "LLP",
-            "LTD",
-            "PLC",
-            "& CO",
-            "+ CO",
-            "EEIG",
-            "EESV",
-            "EOFG",
-            "EOOS",
-            "GEIE",
-            "GELE",
-            "ICVC",
-            "LTD.",
-            "NULL",
-            "OEIC",
-            "C.I.C",
-            "P.L.C",
-            "UNLTD",
-            "AND CO",
-            "CO LLP",
-            "CO LTD",
-            "CO PLC",
-            "P.L.C.",
-            "UNLTD.",
-            "COMPANY",
-            "LIMITED",
-            "& CO LTD",
-            "& CO PLC",
-            "+ CO LTD",
-            "+ CO PLC",
-            "& COMPANY",
-            "+ COMPANY",
-            "UNLIMITED",
-            "& CO UNLTD",
-            "+ CO UNLTD",
-            "AND CO LLP",
-            "AND CO LTD",
-            "AND CO PLC",
-            "CO LIMITED",
-            "& CO UNLTD.",
-            "+ CO UNLTD.",
-            "AND COMPANY",
-            "COMPANY LLP",
-            "COMPANY LTD",
-            "COMPANY PLC",
-            "& AND CO LLP",
-            "& CO LIMITED",
-            "+ CO LIMITED",
-            "AND CO UNLTD",
-            "& COMPANY LLP",
-            "& COMPANY PLC",
-            "+ COMPANY LLP",
-            "+ COMPANY LTD",
-            "+ COMPANY LIMITED LIABILITY PARTNERSHIP",
-            "INVESTMENT COMPANY WITH VARIABLE CAPITAL",
-            "AND COMPANY LIMITED LIABILITY PARTNERSHIP",
-            "COMMUNITY INTEREST PUBLIC LIMITED COMPANY",
-            "L.P.",
-            "LIMITED.",
-            ".LTD",
-            "COMPANY LTD.",
-            "INVALID ENDING",
-            "& CO. LIMITED",
-            "PARTNERSHIP",
-            "CO.LIMITED",
-            "CO. LIMITED",
-            "CO.LTD",
-            "& CO. LTD",
-            "CO. LTD",
-            "CO. LTD.",
-            "CO.",
-            "& CO.",
-            "CO.",
-            "AND CO. LTD.",
-            "& CO. LTD.",
-            "COMPANY",
-            "CO.",
-            "CO LTD.",
-            "CO.",
-            "AND CO. LIMITED",
-            "AND CO. LTD",
-            "+ COMPANY PLC",
-            "AND CO UNLTD.",
-            "& CO UNLIMITED",
-            "+ CO UNLIMITED",
-            "AND CO LIMITED",
-            "& COMPANY UNLTD",
-            "& COMPANY LTD",
-            "& CO. LIMITED.",
-            "AND CO.LIMITED",
-            "& CO.LIMITED",
-            "AND COMPANY LTD.",
-            "& CO.",
-            "& CO LLP",
-            "+ CO. LIMITED",
-            "& COMPANY",
-            "& CO.",
-            "+ CO. LTD",
-            "AND CO LTD.",
-            "& CO.",
-            "AND CO.",
-            "AND CO.",
-            "AND CO.LTD",
-            "& CO. LIMITED",
-            "& COMPANY",
-            "& CO.LTD",
-            "+ CO LLP",
-            "& CO",
-            "AND COMPANY P.L.C.",
-            "CO.",
-            "COMPANY LIMITED",
-            "& COMPANY",
-            "CO",
-            "& CO. LIMITED",
-            "CO; LIMITED",
-            "UN LIMITED",
-            "P L C",
-            "& CO. LIMITED",
-            ".CO.",
-            ".CO.",
-            "C.I.C",
-            "COMPANY. LIMITED",
-            "& COMPANY. LIMITED",
-            "AND COMPANY LIMITED",
-            "COMPANY LIMITED",
-            "COMPANY",
-            "COMPANY LTD..",
-            "& CO",
-            "COMPANY P.L.C.",
-            "COMPANY LIMITED.",
-            "& COMPANY P.L.C.",
-            "COMPANY P L C",
-            "AND COMPANY LIMITED",
-            "CO.LIMITED.",
-            "COMPANY P.L.C.",
-            "& CO.LIMITED.",
-            "CO",
-            "& CO. PUBLIC LIMITED COMPANY",
-            "&CO. LIMITED",
-            "& CO LIMITED",
-            "& CO.LTD.",
-            "& COMPANY LIMITED.",
-            "CO LIMITED",
-            "& COMPANY LIMITED",
-            "& CO LIMITED",
-            "CO. LIMITED",
-            "CO.LTD.",
-            "E.E.I.G.",
-            "CO LTD",
-            "COMPANY LTD",
-            "P.L.C",
-            ",LIMITED",
-            "COMPANY P.L.C",
-            "COMPANY",
-            "CO.",
-            "AND COMPANY",
-            "COMPANY(THE)LIMITED",
-            "CO",
-            "COMPANYLIMITED",
-            "CO",
-            "CO.",
-            "& CO.)LIMITED",
-            "& CO.)LIMITED.",
-            "COMPANY.LIMITED",
-            "COMPANY",
-            "COMPANY)LIMITED",
-            "LTD.CO.",
-            "& COMPANY.LIMITED",
-            "THE)LIMITED",
-            "&& CO.LIMITED",
-            "COMPANY UN-LIMITED",
-            "CO.PLC",
-            "COMPANY",
-            "AND COMPANY.LIMITED",
-            "& CO;LIMITED",
-            "CO",
-            "& CO..LIMITED",
-            "COMPANY",
-            "AND COMPANYLIMITED",
-            "CO",
-            "COMPANY",
-            "LTD",
-            "PLC.",
-            "& CO LTD.",
-            "& COMPANY LTD.",
-            "SE",
-            "CCG CYF",
-            "CCG CYFYNGEDIG",
-            "CWMNI CELL GWARCHODEDIG",
-            "AR CWMNI PAC",
-            "AR CWMNI CYF",
-            "AR CWMNI CCC",
-            "CWMNI CYFYNGEDIG",
-            "CYFYNGEDIG CWMNI",
-            "& CWMNI CYFYNGEDIG",
-            "+CWMNI CYFYNGEDIG",
-            "AR CWMNI CYFYNGEDIG",
-            "PARTNERIAETH CYFYNGEDIG",
-            "CWMNI BUDDIANT CYMUNEDOL CCC",
-            "CWMNI CYFYNGEDIG CYHOEDDUS",
-            "CWMNI BUDDIANT CYMUNEDOL C.C.C",
-            "AR CWMNI CYFYNGEDIG CYHOEDDUS",
-            "CWMNI BUDDIANT CYMUNEDOL",
-            "PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "CWMNIBUDDSODDIANTPENAGORED",
-            "CWMNI CWMNI CYFYNGEDIG CYHOEDDUS",
-            "&CWMNI CWMNI CYFYNGEDIG CYHOEDDUS",
-            "+CWMNI CWMNI CYFYNGEDIG CYHOEDDUS",
-            "CNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "& CNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "+ CNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "AR CWMNI CWMNI CYFYNGEDIG CYHOEDDUS",
-            "AR CNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "CWMNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "& CWMNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "CBC",
-            "PAC",
-            "CYF",
-            "CCC",
-            "CBCN",
-            "CYF.",
-            "NULL",
-            "C.B.C",
-            "C.C.C",
-            "CNI PAC",
-            "C.C.C.",
-            "CWMNI",
-            "CYFYNGEDIG",
-            "& CWMNI",
-            "+ CWMNI",
-            "ANGHYFYNGEDIG",
-            "AR CNI PAC",
-            "AR CWMNI",
-            "CWMNI PAC",
-            "CWMNI CYF",
-            "CWMNI CCC",
-            "& AR CNI PAC",
-            "& CWMNI PAC",
-            "& CWMNI CCC",
-            "+ CWMNI PAC",
-            "+ CWMNI CYF",
-            "+ CWMNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "CWMNIBUDDSODDIACHYFALAFNEWIDIOL",
-            "AR CWMNI PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG",
-            "CWMNI BUDDIANT CYMUNEDOL CYHOEDDUS CYFYNGEDIG",
-            "+CWMNI CCC"
-    };
+    private static final String SPECIAL_CHARACTERS = "*!";
+    private static final String SPACE_CHARACTER = " ";
+    private static final String COMPANY_NAME_ENDINGS = "AEIE | ANGHYFYNGEDIG | C.B.C | C.B.C. | C.C.C | C.C.C. | C.I.C. " +
+            "| CBC | CBCN | CBP | CCC | CCG CYF | CCG CYFYNGEDIG | CIC | COMMUNITY INTEREST COMPANY " +
+            "| COMMUNITY INTEREST P.L.C. | COMMUNITY INTEREST PLC | COMMUNITY INTEREST PUBLIC LIMITED COMPANY " +
+            "| CWMNI BUDDIANT CYMUNEDOL | CWMNI BUDDIANT CYMUNEDOL C.C.C | CWMNI BUDDIANT CYMUNEDOL CCC " +
+            "| CWMNI BUDDIANT CYMUNEDOL CYHOEDDUS CYFYNGEDIG | CWMNI BUDDSODDIA CHYFALAF NEWIDIOL " +
+            "| CWMNI BUDDSODDIANT PENAGORED | CWMNI CELL GWARCHODEDIG | CWMNI CYFYNGEDIG CYHOEDDUS | CYF | CYF. " +
+            "| CYFYNGEDIG | EEIG | EESV | EOFG | EOOS | EUROPEAN ECONOMIC INTEREST GROUPING | GEIE | GELE | ICVC " +
+            "| INVESTMENT COMPANY WITH VARIABLE CAPITAL | L.P. | LIMITED | LIMITED LIABILITY PARTNERSHIP " +
+            "| LIMITED PARTNERSHIP | LLP | LP | LTD | LTD. | OEIC | OPEN-ENDED INVESTMENT COMPANY | P.C. | P.L.C " +
+            "| P.L.C. | PAC | PARTNERIAETH ATEBOLRWYDD CYFYNGEDIG | PARTNERIAETH CYFYNGEDIG | PC | PCC LIMITED " +
+            "| PCC LTD | PLC | PROTECTED CELL COMPANY | PUBLIC LIMITED COMPANY | SE | UNLIMITED | UNLTD | UNLTD.";
 
-    /**
+   /**
      * {@inheritDoc}
      */
     @Override
@@ -372,10 +90,14 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             .size(size);
     }
 
-    private String stripCompanyEnding(String corporateName){
-        if (corporateName.contains(SPACE_CHARACTER) && Arrays.stream(CORPORATE_NAME_ENDINGS)
-                .anyMatch((e) -> corporateName.toUpperCase().endsWith(e))){
-            return corporateName.substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
+    private String stripCorporateEnding(String corporateName){
+        if (corporateName.contains(SPACE_CHARACTER)){
+            int corpNameEndingStart = corporateName.lastIndexOf(SPACE_CHARACTER);
+            String corpNameEnding = corporateName.substring(corpNameEndingStart).trim().toUpperCase();
+            if (COMPANY_NAME_ENDINGS.contains(corpNameEnding)) {
+                String corpNameSansEnding = corporateName.trim().substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
+                return corpNameSansEnding;
+            }
         }
         return corporateName;
     }
@@ -386,7 +108,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             return (char) (cint - 1);
         }
         if (cint == 65 || cint == 97){
-            return '0';
+            return '9';
         }
         else {
             return c;
@@ -394,7 +116,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
     }
 
     private QueryBuilder createAlphabeticalSearchQuery(String corporateName) {
-        LOG.info(ALPHABETICAL_SEARCH + "Adding query for: " + corporateName);
+        LOG.info(ALPHABETICAL_SEARCH + "Building query for: " + corporateName);
 
         // get alpha key variables for corporate name
         AlphaKeyResponse alphaKeyResponse = alphaKeyService.getAlphaKeyForCorporateName(corporateName);
@@ -405,21 +127,17 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         LOG.info("Ordered alpha key for corporate: " + corporateName + " : " + corporateNameOrderedAlphaKey);
 
         // strip company name ending
-        String corporateNameSansEnding = stripCompanyEnding(corporateName).toLowerCase();
-        final int CORP_NAME_SANS_ENDING_LENGTH = corporateNameSansEnding.length();
+        String corporateNameSansEnding = stripCorporateEnding(corporateName).toLowerCase();
         int FUZZINESS = 1;
-        boolean MULTI_WORD = false;
 
         String corporateNameFirstPart, corporateNamePrevious, corporateNamePrefix, corporateNameAlphaPrefix;
         if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
             corporateNameFirstPart = corporateNameSansEnding.substring(0, corporateNameSansEnding.indexOf(SPACE_CHARACTER));
-            MULTI_WORD = true;
             FUZZINESS = 5;
         }
         else {
             corporateNameFirstPart = corporateNameSansEnding;
         }
-
         final int CORP_NAME_FIRST_PART_LENGTH = corporateNameFirstPart.length();
 
         if (CORP_NAME_FIRST_PART_LENGTH > 1){
@@ -429,10 +147,12 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         }
         else {
             corporateNamePrefix = corporateNameFirstPart;
-            corporateNamePrevious = corporateNameFirstPart;
+            char prevChar = previousCharacter(corporateNameFirstPart.charAt(0));
+            corporateNamePrevious = prevChar + "";
         }
 
         final int CORP_NAME_ALPHA_KEY_LENGTH = corporateNameAlphaKey.length();
+        final int CORP_NAME_PREFIX_LENGTH = corporateNamePrefix.length();
 
         if (CORP_NAME_ALPHA_KEY_LENGTH > 1) {
             corporateNameAlphaPrefix = corporateNameAlphaKey.substring(0, corporateNameAlphaKey.length()-1);
@@ -443,20 +163,23 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
 
         BoolQueryBuilder query = QueryBuilders.boolQuery();
 
-        /// alpha key
-        query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
-        query.should(QueryBuilders.prefixQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
-        query.should(QueryBuilders.wildcardQuery("items.alpha_key", corporateNameAlphaPrefix + "*"));
+        if (CORP_NAME_FIRST_PART_LENGTH == 1 && !corporateNameSansEnding.matches("([\\s?&?$?0-9a-zA-Z])+")) {
+            query.should(QueryBuilders.wildcardQuery("items.corporate_name_start", corporateNamePrefix + "*"));
+        }
+        else {
+            /// alpha key
+            query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
+            query.should(QueryBuilders.prefixQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
+            query.should(QueryBuilders.wildcardQuery("items.alpha_key", corporateNameAlphaPrefix + "*"));
+        }
 
         /// company name start
-        query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNamePrefix + ")([0-1])*([a-cA-C~l])*.*"));
-        if (corporateNamePrefix.length() > 1) {
-            query.should(QueryBuilders.matchQuery("items.corporate_name_start", corporateNamePrevious).fuzziness(FUZZINESS));
-        }
+        query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNamePrefix + ")([0-1])*([a-cA-C])*.*"));
+        query.should(QueryBuilders.matchQuery("items.corporate_name_start", corporateNamePrevious).fuzziness(FUZZINESS));
         query.should(QueryBuilders.matchQuery("items.corporate_name_start", corporateNameSansEnding + "a").fuzziness(FUZZINESS));
         if (CORP_NAME_FIRST_PART_LENGTH > 1) {
-            query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameSansEnding + ")([0-1])*([a-cA-C~l])*.*"));
-            if (MULTI_WORD && corporateNamePrefix.length() > 4) {
+            query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameSansEnding + ")([0-1])*([a-cA-C])*.*"));
+            if (CORP_NAME_PREFIX_LENGTH > 4) {
                 corporateNamePrefix = corporateNamePrefix.substring(0, 4);
             }
             query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNamePrefix + "([^ ]).*").boost(5));
