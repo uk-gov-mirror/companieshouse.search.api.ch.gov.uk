@@ -130,8 +130,9 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         String corporateNameSansEnding = stripCorporateEnding(corporateName).toLowerCase();
 
         String corporateNameFirstPart = "", corporateNamePrevious, corporateNameFirstPartPrevious = "", corporateNamePrefix,
-                corporateNameFirstPartPrefix, corporateNameAlphaPrefix, corporateNameFirstThreeLetters = "",
-                corporateNameFirstThreeLettersPrevious = "";
+                corporateNameFirstPartPrefix, corporateNameAlphaPrefix,
+                corporateNameFirstThreeLetters = "", corporateNameFirstThreeLettersPrevious = "",
+                corporateNameFirstFourLetters = "", corporateNameFirstFourLettersPrevious = "", corporateNameFirstFourLettersPrePrevious = "";
 
         final int CORP_NAME_SANS_ENDING_LENGTH = corporateNameSansEnding.length();
 
@@ -142,10 +143,20 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             char prevChar = previousCharacter(corporateNameSansEnding.charAt(CORP_NAME_SANS_ENDING_LENGTH-1));
             corporateNamePrevious = corporateNamePrefix + prevChar;
 
-            if (corporateNameSansEnding.length() > 3) {
+            if (corporateNameSansEnding.length() >= 3) {
                 corporateNameFirstThreeLetters = corporateNameSansEnding.substring(0, 3);
-                char prevCharFourthLetter = previousCharacter(corporateNameFirstThreeLetters.charAt(2));
-                corporateNameFirstThreeLettersPrevious = corporateNameFirstThreeLetters.substring(0, 2) + prevCharFourthLetter;
+                char prevCharThirdLetter = previousCharacter(corporateNameFirstThreeLetters.charAt(2));
+                corporateNameFirstThreeLettersPrevious = corporateNameFirstThreeLetters.substring(0, 2) + prevCharThirdLetter;
+            }
+            if (corporateNameSansEnding.length() >= 4) {
+                corporateNameFirstFourLetters = corporateNameSansEnding.substring(0, 4);
+                char prevCharFourthLetter = previousCharacter(corporateNameFirstFourLetters.charAt(3));
+                corporateNameFirstFourLettersPrevious = corporateNameFirstFourLetters.substring(0, 3) + prevCharFourthLetter;
+
+                if (corporateNameSansEnding.charAt(2) == corporateNameSansEnding.charAt(3)){
+                    char prePrevCharFourthLetter = previousCharacter(prevCharFourthLetter);
+                    corporateNameFirstFourLettersPrePrevious = corporateNameFirstFourLetters.substring(0, 3) + prePrevCharFourthLetter;
+                }
             }
             if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
                 corporateNameFirstPart = corporateNameSansEnding.substring(0, corporateNameSansEnding.indexOf(SPACE_CHARACTER));
@@ -187,7 +198,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         else {
             /// alpha key
             query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
-            query.should(QueryBuilders.prefixQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
+            //query.should(QueryBuilders.prefixQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
             query.should(QueryBuilders.wildcardQuery("items.alpha_key", corporateNameAlphaPrefix + "*"));
         }
 
@@ -198,8 +209,18 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameSansEnding + "a*"));
 
         if (CORP_NAME_FIRST_THREE_LETTERS_LENGTH > 0) {
+            query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameFirstThreeLetters.toUpperCase()).boost(5));
+            query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameFirstThreeLettersPrevious.toUpperCase()).boost(5));
+            query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameFirstFourLettersPrevious.toUpperCase()).boost(5));
+
             query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstThreeLetters + "*"));
             query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstThreeLettersPrevious + "*"));
+            query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstFourLettersPrevious + "*"));
+
+            if (corporateNameSansEnding.charAt(2) == corporateNameSansEnding.charAt(3)) {
+                query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameFirstFourLettersPrePrevious.toUpperCase()).boost(5));
+                query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstFourLettersPrePrevious + "*"));
+            }
         }
         if (CORP_NAME_FIRST_PART_LENGTH > 1) {
             if (CORP_NAME_FIRST_PART_LENGTH < CORP_NAME_SANS_ENDING_LENGTH) {
@@ -207,7 +228,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
                 query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstPart + "*"));
             }
             query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameSansEnding + ")([0-1])*([a-cA-C])*.*"));
-            query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNamePrefix.substring(0, 2) + "([^ ]).*").boost(5));
+            query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNameSansEnding.charAt(0) + "([^ ]).*").boost(5));
         }
         System.out.println(query.toString());
 
