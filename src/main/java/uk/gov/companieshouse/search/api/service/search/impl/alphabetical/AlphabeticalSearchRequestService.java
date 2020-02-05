@@ -42,7 +42,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private static final String SPACE_CHARACTER = " ";
-    // spaces around company endings help in finding exact matches
+    // spaces and pipes around company endings help in finding exact matches
     private static final String COMPANY_NAME_ENDINGS = " AEIE | ANGHYFYNGEDIG | C.B.C | C.B.C. | C.C.C | C.C.C. " +
             "| C.I.C. | CBC | CBCN | CBP | CCC | CCG CYF | CCG CYFYNGEDIG | CIC | COMMUNITY INTEREST COMPANY " +
             "| COMMUNITY INTEREST P.L.C. | COMMUNITY INTEREST PLC | COMMUNITY INTEREST PUBLIC LIMITED COMPANY " +
@@ -96,7 +96,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             int corpNameEndingStart = corporateName.lastIndexOf(SPACE_CHARACTER);
             String corpNameEnding = corporateName.substring(corpNameEndingStart).trim().toUpperCase();
             if (COMPANY_NAME_ENDINGS.contains(" " + corpNameEnding.toUpperCase() + " ")) {
-                String corpNameSansEnding = corporateName.trim().substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
+                String corpNameSansEnding = corporateName.trim().substring(0, corporateName.lastIndexOf(SPACE_CHARACTER)).trim();
                 return corpNameSansEnding;
             }
         }
@@ -129,29 +129,43 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         // Strip company name ending. Corporate name search against corporate_name_start works best in lower case.
         String corporateNameSansEnding = stripCorporateEnding(corporateName).toLowerCase();
 
-        String corporateNameFirstPart, corporateNamePrevious, corporateNamePrefix, corporateNameAlphaPrefix;
-        if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
-            corporateNameFirstPart = corporateNameSansEnding.substring(0, corporateNameSansEnding.indexOf(SPACE_CHARACTER));
-        }
-        else {
-            corporateNameFirstPart = corporateNameSansEnding;
-        }
+        String corporateNameFirstPart = "", corporateNamePrevious, corporateNameFirstPartPrevious = "", corporateNamePrefix,
+                corporateNameFirstPartPrefix, corporateNameAlphaPrefix, corporateNameFirstThreeLetters = "",
+                corporateNameFirstThreeLettersPrevious = "";
+
         final int CORP_NAME_SANS_ENDING_LENGTH = corporateNameSansEnding.length();
-        final int CORP_NAME_FIRST_PART_LENGTH = corporateNameFirstPart.length();
 
         // Calculate and apply a trailing previous character
         // so matches above the best match are alphabetically descending
-        if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
+        if (corporateNameSansEnding.length() > 1) {
             corporateNamePrefix = corporateNameSansEnding.substring(0, CORP_NAME_SANS_ENDING_LENGTH-1);
             char prevChar = previousCharacter(corporateNameSansEnding.charAt(CORP_NAME_SANS_ENDING_LENGTH-1));
             corporateNamePrevious = corporateNamePrefix + prevChar;
+
+            if (corporateNameSansEnding.length() > 3) {
+                corporateNameFirstThreeLetters = corporateNameSansEnding.substring(0, 3);
+                char prevCharFourthLetter = previousCharacter(corporateNameFirstThreeLetters.charAt(2));
+                corporateNameFirstThreeLettersPrevious = corporateNameFirstThreeLetters.substring(0, 2) + prevCharFourthLetter;
+            }
+            if (corporateNameSansEnding.contains(SPACE_CHARACTER)) {
+                corporateNameFirstPart = corporateNameSansEnding.substring(0, corporateNameSansEnding.indexOf(SPACE_CHARACTER));
+                char prevCharFirstPart = previousCharacter(corporateNameFirstPart.charAt(corporateNameFirstPart.length()-1));
+                corporateNameFirstPartPrefix = corporateNameFirstPart.substring(0, corporateNameFirstPart.length()-1);
+                corporateNameFirstPartPrevious = corporateNameFirstPartPrefix + prevCharFirstPart;
+            }
+            else {
+                corporateNameFirstPart = corporateNameSansEnding;
+                corporateNameFirstPartPrevious = corporateNamePrevious;
+            }
         }
         else {
             corporateNamePrefix = corporateNameSansEnding;
             char prevChar = previousCharacter(corporateNameSansEnding.charAt(0));
-            corporateNamePrevious = prevChar + "";
+            corporateNamePrevious = "" + prevChar;
         }
 
+        final int CORP_NAME_FIRST_PART_LENGTH = corporateNameFirstPart.length();
+        final int CORP_NAME_FIRST_THREE_LETTERS_LENGTH = corporateNameFirstThreeLetters.length();
         final int CORP_NAME_ALPHA_KEY_LENGTH = corporateNameAlphaKey.length();
         final int CORP_NAME_PREFIX_LENGTH = corporateNamePrefix.length();
 
@@ -164,8 +178,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
 
         BoolQueryBuilder query = QueryBuilders.boolQuery();
 
-        // add a wildcard query
-        if (CORP_NAME_FIRST_PART_LENGTH == 1 && !corporateNameSansEnding.matches("([\\s?&?$?0-9a-zA-Z])+")) {
+        if (CORP_NAME_SANS_ENDING_LENGTH == 1 && !corporateNameSansEnding.matches("([\\s?&?$?0-9a-zA-Z])+")) {
             if (corporateNamePrefix.equals("*")){
                 corporateNamePrefix = "\\*";
             }
@@ -181,10 +194,18 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         /// company name start
         query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNamePrefix + ")([0-1])*([a-cA-C])*.*"));
         query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameSansEnding + "*"));
-        /// TODO corporateNamePrevious incorrect
         query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNamePrevious + "*"));
         query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameSansEnding + "a*"));
+
+        if (CORP_NAME_FIRST_THREE_LETTERS_LENGTH > 0) {
+            query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstThreeLetters + "*"));
+            query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstThreeLettersPrevious + "*"));
+        }
         if (CORP_NAME_FIRST_PART_LENGTH > 1) {
+            if (CORP_NAME_FIRST_PART_LENGTH < CORP_NAME_SANS_ENDING_LENGTH) {
+                query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstPartPrevious + "*"));
+                query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstPart + "*"));
+            }
             query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameSansEnding + ")([0-1])*([a-cA-C])*.*"));
             query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNamePrefix.substring(0, 2) + "([^ ]).*").boost(5));
         }

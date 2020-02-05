@@ -45,7 +45,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     private static final String SEARCH_TYPE = "alphabetical_search";
     private static final String SPECIAL_CHARACTERS = "+*^.@&!?$£";
     private static final String SPACE_CHARACTER = " ";
-    // spaces around company endings help in finding exact matches
+    // spaces and pipes around company endings help in finding exact matches
     private static final String COMPANY_NAME_ENDINGS = " AEIE | ANGHYFYNGEDIG | C.B.C | C.B.C. | C.C.C | C.C.C. " +
             "| C.I.C. | CBC | CBCN | CBP | CCC | CCG CYF | CCG CYFYNGEDIG | CIC | COMMUNITY INTEREST COMPANY " +
             "| COMMUNITY INTEREST P.L.C. | COMMUNITY INTEREST PLC | COMMUNITY INTEREST PUBLIC LIMITED COMPANY " +
