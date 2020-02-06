@@ -109,10 +109,10 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             return (char) (cint - 1);
         }
         else if (cint == 65){
-            return 'Z';
+            return '9';
         }
         else if (cint == 97){
-            return 'z';
+            return '9';
         }
         else {
             return c;
@@ -130,7 +130,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         String corporateNameSansEnding = stripCorporateEnding(corporateName).toLowerCase();
 
         String corporateNameFirstPart = "", corporateNamePrevious, corporateNameFirstPartPrevious = "", corporateNamePrefix,
-                corporateNameFirstPartPrefix, corporateNameAlphaPrefix,
+                corporateNameFirstPartPrefix, corporateNameAlphaPrefix = "", corporateNameAlphaPrevious = "",
                 corporateNameFirstThreeLetters = "", corporateNameFirstThreeLettersPrevious = "",
                 corporateNameFirstFourLetters = "", corporateNameFirstFourLettersPrevious = "", corporateNameFirstFourLettersPrePrevious = "";
 
@@ -180,11 +180,14 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         final int CORP_NAME_ALPHA_KEY_LENGTH = corporateNameAlphaKey.length();
         final int CORP_NAME_PREFIX_LENGTH = corporateNamePrefix.length();
 
-        if (CORP_NAME_ALPHA_KEY_LENGTH > 1) {
-            corporateNameAlphaPrefix = corporateNameAlphaKey.substring(0, corporateNameAlphaKey.length()-1);
-        }
-        else {
-            corporateNameAlphaPrefix = corporateNameAlphaKey;
+        if (!corporateNameAlphaKey.isEmpty()) {
+            if (CORP_NAME_ALPHA_KEY_LENGTH > 1) {
+                corporateNameAlphaPrefix = corporateNameAlphaKey.substring(0, corporateNameAlphaKey.length() - 1);
+                corporateNameAlphaPrevious = corporateNameAlphaPrefix + previousCharacter(corporateNameAlphaKey.charAt(corporateNameAlphaKey.length() - 1));
+            } else {
+                corporateNameAlphaPrefix = corporateNameAlphaKey;
+                corporateNameAlphaPrevious = "" + previousCharacter(corporateNameAlphaKey.charAt(0));
+            }
         }
 
         BoolQueryBuilder query = QueryBuilders.boolQuery();
@@ -195,10 +198,17 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
             }
             query.should(QueryBuilders.wildcardQuery("items.corporate_name_start", corporateNamePrefix + "*"));
         }
+        else if (CORP_NAME_SANS_ENDING_LENGTH == 1) {
+            query.should(QueryBuilders.wildcardQuery("items.corporate_name_start", corporateNamePrefix + "*"));
+            query.should(QueryBuilders.wildcardQuery("items.corporate_name_start", corporateNamePrevious + "*"));
+
+            if (!corporateNameAlphaKey.isEmpty()) {
+                query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
+                query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameAlphaPrevious).boost(5));
+            }
+        }
         else {
-            /// alpha key
             query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
-            //query.should(QueryBuilders.prefixQuery("items.alpha_key", corporateNameAlphaKey).boost(5));
             query.should(QueryBuilders.wildcardQuery("items.alpha_key", corporateNameAlphaPrefix + "*"));
         }
 
@@ -207,6 +217,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
         query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameSansEnding + "*"));
         query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNamePrevious + "*"));
         query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameSansEnding + "a*"));
+        query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNamePrefix + "a*"));
 
         if (CORP_NAME_FIRST_THREE_LETTERS_LENGTH > 0) {
             query.should(QueryBuilders.matchQuery("items.alpha_key", corporateNameFirstThreeLetters.toUpperCase()).boost(5));
@@ -227,7 +238,6 @@ public class AlphabeticalSearchRequestService implements SearchRequestService {
                 query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstPartPrevious + "*"));
                 query.should(QueryBuilders.wildcardQuery("items.corporate_name_start.edge_ngram", corporateNameFirstPart + "*"));
             }
-            query.should(QueryBuilders.regexpQuery("items.corporate_name_start", "^(" + corporateNameSansEnding + ")([0-1])*([a-cA-C])*.*"));
             query.filter(QueryBuilders.regexpQuery("items.corporate_name_start", "~([.*])" + corporateNameSansEnding.charAt(0) + "([^ ]).*").boost(5));
         }
         System.out.println(query.toString());
