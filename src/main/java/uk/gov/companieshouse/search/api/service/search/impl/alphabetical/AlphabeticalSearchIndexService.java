@@ -6,6 +6,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.metrics.TopHits;
+import org.elasticsearch.search.suggest.Suggest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.Logger;
@@ -86,7 +87,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     private SearchResults performAlphabeticalSearch(String corporateName, String requestId)
         throws SearchException, ObjectMapperException {
 
-        SearchResponse searchResponse;
+        SearchResponse searchResponse, suggestionResponse;
 
         try {
             searchResponse = searchRestClient.searchRestClient(
@@ -128,8 +129,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     }
 
     private SearchResults<Company> getSearchResults(String highestMatchName, SearchHits searchHits,
-        String corporateName)
-        throws ObjectMapperException {
+                                                    String corporateName) throws ObjectMapperException {
 
         SearchResults<Company> searchResults = new SearchResults();
 
@@ -283,7 +283,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
 
     // comparator to order strings ignoring whitespaces and special characters
     private Comparator<Company> companyNameNoSpacesComparator(){
-        String pattern = "[^A-Za-z]+";
+        String pattern = "[^A-Za-z().]+";
         String replacement = "";
         return Comparator.comparing(c -> stripCorporateEnding(c.getItems().getCorporateName()).replaceAll(pattern, replacement));
     }
