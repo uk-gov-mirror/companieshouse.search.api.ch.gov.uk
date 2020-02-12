@@ -6,7 +6,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.metrics.TopHits;
-import org.elasticsearch.search.suggest.Suggest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.Logger;
@@ -104,7 +103,9 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
                 searchResponse.getAggregations().asList(), corporateName);
         }
 
-        LOG.info("Found hits: " + searchResponse.getHits().getHits().length);
+        if (searchResponse.getHits() != null && searchResponse.getHits().getHits() != null) {
+            LOG.info("Found hits: " + searchResponse.getHits().getHits().length);
+        }
         if(highestMatchName != null) {
             return getSearchResults(highestMatchName, searchResponse.getHits(), corporateName);
         } else {
@@ -131,7 +132,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     private SearchResults<Company> getSearchResults(String highestMatchName, SearchHits searchHits,
                                                     String corporateName) throws ObjectMapperException {
 
-        SearchResults<Company> searchResults = new SearchResults();
+        SearchResults<Company> searchResults;
 
         String bestMatchName = new String();
         int bestMatchIndexPos = 0;
@@ -157,7 +158,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         searchResults = getBestMatchSearchResults(companies, bestMatchIndexPos, bestMatchName);
 
         /// return results found around best match OR fall back to elasticsearch's highest match
-        if (searchResults != null && searchResults.getResults().size() > 0) {
+        if (searchResults.getResults().size() > 0) {
             return searchResults;
         }
 
@@ -212,7 +213,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
     private int getIndexEnd(int totalResults, int highestMatchIndexPos) {
 
         int bottomMatchesSize = totalResults - highestMatchIndexPos;
-        int indexEndPos = highestMatchIndexPos + (bottomMatchesSize < 10 ? bottomMatchesSize : 10);
+        int indexEndPos = highestMatchIndexPos + Math.min(bottomMatchesSize, 10);
         int differenceIndexPos = indexEndPos - totalResults;
 
         if (differenceIndexPos <= 0) {
@@ -226,11 +227,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
 
         int indexStartPos = highestMatchIndexPos - 9;
 
-        if (indexStartPos >= 0) {
-            return indexStartPos;
-        } else {
-            return 0;
-        }
+        return Math.max(indexStartPos, 0);
     }
 
     private String getHighestMatchedCompanyName(Aggregation aggregation,
@@ -274,8 +271,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
             int corpNameEndingStart = corporateName.lastIndexOf(SPACE_CHARACTER);
             String corpNameEnding = corporateName.substring(corpNameEndingStart).trim();
             if (COMPANY_NAME_ENDINGS.contains(" " + corpNameEnding.toUpperCase() + " ")) {
-                String corpNameSansEnding = corporateName.trim().substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
-                return corpNameSansEnding;
+                return corporateName.trim().substring(0, corporateName.lastIndexOf(SPACE_CHARACTER));
             }
         }
         return corporateName;
@@ -325,33 +321,33 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         // if searching for single character
         if (stripCorporateEnding(corporateName).length() == 1) {
             if (SPECIAL_CHARACTERS.contains(corporateName)){
-                companies.stream()
+                /*companies.stream()
                         .sorted(companyNameSpecialCharComparator(corporateName))
                         .forEach(c -> {
                             System.out.println(c.getItems().getCorporateName());
-                        });
+                        });*/
 
                 return companies.stream()
                         .sorted(companyNameSpecialCharComparator(corporateName))
                         .collect(Collectors.toList());
             }
             else {
-                companies.stream()
+                /*companies.stream()
                         .sorted(companyNameNoSpacesComparator())
                         .forEach(c -> {
                             System.out.println(c.getItems().getCorporateName());
-                        });
+                        });*/
 
                 return companies.stream()
                         .sorted(companyNameNoSpacesComparator())
                         .collect(Collectors.toList());
             }
         }
-        System.out.println("##############  " + corporateName + "  ##############");
+        /*System.out.println("##############  " + corporateName + "  ##############");
         companies.stream()
                 .filter(c -> c.getItems().getCorporateName().startsWith(corpNameFirstLetter))
                 .sorted(companyNameNoSpacesComparator())
-                .forEach(c -> {System.out.println(c.getItems().getCorporateName());});
+                .forEach(c -> {System.out.println(c.getItems().getCorporateName());});*/
 
 
         return companies.stream()

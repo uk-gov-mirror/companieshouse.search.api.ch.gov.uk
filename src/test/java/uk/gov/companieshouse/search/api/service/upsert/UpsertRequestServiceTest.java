@@ -38,8 +38,8 @@ public class UpsertRequestServiceTest {
 
         assertNotNull(indexRequest);
         assertNotNull(updateRequest);
-        assertEquals(ALPHA_SEARCH, indexRequest.index().toString());
-        assertEquals(ALPHA_SEARCH, updateRequest.index().toString());
+        assertEquals(ALPHA_SEARCH, indexRequest.index());
+        assertEquals(ALPHA_SEARCH, updateRequest.index());
     }
 
     @Test

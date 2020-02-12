@@ -162,21 +162,16 @@ public class AlphabeticalSearchIndexServiceTest {
             JsonXContent.jsonXContent.createParser(registry,
                 DeprecationHandler.THROW_UNSUPPORTED_OPERATION, jsonResponse);
 
-        SearchResponse searchResponse = SearchResponse.fromXContent(parser);
-
-
-        return searchResponse;
+        return SearchResponse.fromXContent(parser);
     }
 
     private List<Entry> getDefaultNamedXContents() {
         Map<String, ContextParser<Object, ? extends Aggregation>> map = new HashMap<>();
         map.put(TopHitsAggregationBuilder.NAME, (p, c) -> ParsedTopHits.fromXContent(p, (String) c));
         map.put(StringTerms.NAME, (p, c) -> ParsedStringTerms.fromXContent(p, (String) c));
-        List<NamedXContentRegistry.Entry> entries = map.entrySet().stream()
+        return map.entrySet().stream()
             .map(entry -> new NamedXContentRegistry.Entry(Aggregation.class,
                 new ParseField(entry.getKey()), entry.getValue()))
             .collect(Collectors.toList());
-
-        return entries;
     }
 }

@@ -15,5 +15,5 @@ public class SearchApiApplicationConfiguration {
     }
 
     @Bean
-    RestTemplate restTemplate() { return new RestTemplate(); };
+    RestTemplate restTemplate() { return new RestTemplate(); }
 }
