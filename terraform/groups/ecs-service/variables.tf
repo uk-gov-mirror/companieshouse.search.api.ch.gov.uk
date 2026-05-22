@@ -145,3 +145,8 @@ variable "eric_version" {
   type        = string
   description = "The version of the eric container to run."
 }
+variable "service_autoscale_scale_out_cooldown" {
+  type        = number
+  description = "Cooldown in seconds for ECS Service scale out (add more tasks)"
+  default     = 300
+}
