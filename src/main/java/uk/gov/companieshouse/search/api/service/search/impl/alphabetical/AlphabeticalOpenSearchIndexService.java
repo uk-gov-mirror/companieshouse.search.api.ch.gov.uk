@@ -1,9 +1,5 @@
 package uk.gov.companieshouse.search.api.service.search.impl.alphabetical;
 
-import static uk.gov.companieshouse.search.api.logging.LoggingUtils.getLogger;
-
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.util.DataMap;
@@ -16,14 +12,18 @@ import uk.gov.companieshouse.search.api.service.search.SearchIndexService;
 import uk.gov.companieshouse.search.api.service.search.SearchRequestService;
 import uk.gov.companieshouse.search.api.util.ConfiguredIndexNamesProvider;
 
+import java.util.Map;
+
+import static uk.gov.companieshouse.search.api.logging.LoggingUtils.getLogger;
+
 @Service
-public class AlphabeticalSearchIndexService implements SearchIndexService {
+public class AlphabeticalOpenSearchIndexService implements SearchIndexService {
 
     private final SearchRequestService<Company> searchRequestService;
     private final ConfiguredIndexNamesProvider indices;
 
-    public AlphabeticalSearchIndexService(@Qualifier("alphabeticalSearchRequestService")  SearchRequestService<Company> searchRequestService,
-        ConfiguredIndexNamesProvider indices) {
+    public AlphabeticalOpenSearchIndexService(@Qualifier("alphabeticalOpenSearchRequestService") SearchRequestService<Company> searchRequestService,
+                                              ConfiguredIndexNamesProvider indices) {
         this.searchRequestService = searchRequestService;
         this.indices = indices;
     }

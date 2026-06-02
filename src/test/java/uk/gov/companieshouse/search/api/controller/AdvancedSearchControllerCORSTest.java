@@ -2,6 +2,7 @@ package uk.gov.companieshouse.search.api.controller;
 
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.Test;
+import org.opensearch.client.opensearch.OpenSearchClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,8 +22,10 @@ import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.search.api.elasticsearch.AlphabeticalSearchRequests;
 import uk.gov.companieshouse.search.api.mapper.AdvancedQueryParamMapper;
 import uk.gov.companieshouse.search.api.mapper.ApiToResponseMapper;
+import uk.gov.companieshouse.search.api.opensearch.AlphabeticalOpenSearchRequests;
 import uk.gov.companieshouse.search.api.service.delete.advanced.AdvancedSearchDeleteService;
 import uk.gov.companieshouse.search.api.service.rest.impl.AdvancedSearchRestClientService;
+import uk.gov.companieshouse.search.api.service.rest.impl.AlphabeticalOpenSearchRestClientService;
 import uk.gov.companieshouse.search.api.service.rest.impl.AlphabeticalSearchRestClientService;
 import uk.gov.companieshouse.search.api.service.rest.impl.DissolvedSearchRestClientService;
 import uk.gov.companieshouse.search.api.service.search.impl.advanced.AdvancedSearchIndexService;
@@ -64,6 +67,9 @@ class AdvancedSearchControllerCORSTest {
 
     @MockitoBean
     private RestHighLevelClient primaryRestClient;
+
+    @MockitoBean
+    private OpenSearchClient alphabeticalOpenSearchRestClient;
 
     // Injected services
 
