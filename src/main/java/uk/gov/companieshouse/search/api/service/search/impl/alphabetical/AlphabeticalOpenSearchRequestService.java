@@ -67,7 +67,7 @@ public class AlphabeticalOpenSearchRequestService implements SearchRequestServic
                 .size(String.valueOf(size))
                 .build().getLogMap();
 
-        getLogger().info("Performing search request", logMap);
+        getLogger().info("Performing Open search request", logMap);
         logMap.remove(MESSAGE);
 
         String orderedAlphakey = "";

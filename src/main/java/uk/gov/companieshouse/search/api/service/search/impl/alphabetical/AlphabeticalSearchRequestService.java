@@ -70,7 +70,7 @@ public class AlphabeticalSearchRequestService implements SearchRequestService<Co
                 .size(String.valueOf(size))
                 .build().getLogMap();
 
-        getLogger().info("Performing search request", logMap);
+        getLogger().info("Performing Elastic search request", logMap);
         logMap.remove(MESSAGE);
 
         String orderedAlphakey = "";

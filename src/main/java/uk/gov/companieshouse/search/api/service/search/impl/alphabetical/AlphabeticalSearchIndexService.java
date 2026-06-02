@@ -5,6 +5,7 @@ import static uk.gov.companieshouse.search.api.logging.LoggingUtils.getLogger;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.util.DataMap;
 import uk.gov.companieshouse.search.api.exception.SearchException;
@@ -16,7 +17,10 @@ import uk.gov.companieshouse.search.api.service.search.SearchIndexService;
 import uk.gov.companieshouse.search.api.service.search.SearchRequestService;
 import uk.gov.companieshouse.search.api.util.ConfiguredIndexNamesProvider;
 
+import javax.annotation.PostConstruct;
+
 @Service
+@ConditionalOnProperty(name = "search.backend", havingValue = "elasticsearch", matchIfMissing = true)
 public class AlphabeticalSearchIndexService implements SearchIndexService {
 
     private final SearchRequestService<Company> searchRequestService;
@@ -28,6 +32,11 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         this.indices = indices;
     }
 
+    @PostConstruct
+    public void logBean() {
+        System.err.println("Loaded: " + this.getClass().getName());
+        getLogger().info("Loading Alphabetical Search for ElasticSearch");
+    }
     /**
      * {@inheritDoc}
      */
@@ -48,7 +57,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         SearchResults<Company> searchResults;
 
         try {
-            getLogger().info("Search started ", logMap);
+            getLogger().info("Elastic Search started ", logMap);
             searchResults = searchRequestService.getAlphabeticalSearchResults(corporateName, searchBefore, searchAfter,
                     size, requestId);
         } catch (SearchException e) {

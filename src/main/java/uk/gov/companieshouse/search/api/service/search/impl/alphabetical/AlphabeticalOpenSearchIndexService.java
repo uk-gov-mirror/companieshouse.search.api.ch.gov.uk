@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.search.api.service.search.impl.alphabetical;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.util.DataMap;
 import uk.gov.companieshouse.search.api.exception.SearchException;
@@ -12,11 +13,13 @@ import uk.gov.companieshouse.search.api.service.search.SearchIndexService;
 import uk.gov.companieshouse.search.api.service.search.SearchRequestService;
 import uk.gov.companieshouse.search.api.util.ConfiguredIndexNamesProvider;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 
 import static uk.gov.companieshouse.search.api.logging.LoggingUtils.getLogger;
 
 @Service
+@ConditionalOnProperty(name = "search.backend", havingValue = "opensearch")
 public class AlphabeticalOpenSearchIndexService implements SearchIndexService {
 
     private final SearchRequestService<Company> searchRequestService;
@@ -27,6 +30,13 @@ public class AlphabeticalOpenSearchIndexService implements SearchIndexService {
         this.searchRequestService = searchRequestService;
         this.indices = indices;
     }
+
+    @PostConstruct
+    public void logBean() {
+        System.err.println("Loaded: " + this.getClass().getName());
+        getLogger().info("Loading Alphabetical Search for OpenSearch");
+    }
+
 
     /**
      * {@inheritDoc}
@@ -48,7 +58,7 @@ public class AlphabeticalOpenSearchIndexService implements SearchIndexService {
         SearchResults<Company> searchResults;
 
         try {
-            getLogger().info("Search started ", logMap);
+            getLogger().info("Open Search started ", logMap);
             searchResults = searchRequestService.getAlphabeticalSearchResults(corporateName, searchBefore, searchAfter,
                     size, requestId);
         } catch (SearchException e) {
