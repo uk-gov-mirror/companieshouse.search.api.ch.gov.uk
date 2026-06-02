@@ -24,7 +24,7 @@ public class OpenSearchConfig {
         this.environmentReader = environmentReader;
     }
 
-    // These are currently pointing at the existing ES instance, will need to be updated in the configs for both
+    // These are currently pointing at the existing OS instance, will need to be updated in the configs for both
     private static final String ALPHABETICAL_SEARCH_URL = "OPEN_SEARCH_URL";
 
     @Bean

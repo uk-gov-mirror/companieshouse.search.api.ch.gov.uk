@@ -66,7 +66,7 @@ public class AlphabeticalSearchIndexService implements SearchIndexService {
         }
 
         if(searchResults.getItems() != null && !searchResults.getItems().isEmpty()) {
-            getLogger().info("Search successful", logMap);
+            getLogger().info("Elastic Search successful", logMap);
             return new ResponseObject<>(ResponseStatus.SEARCH_FOUND, searchResults);
         }
 

@@ -9,10 +9,10 @@ import java.io.IOException;
 public interface OpenSearchRestClientService {
 
     /**
-     * interface for elastic search high level rest client used for search
+     * interface for Open search high level rest client used for search
      *
      * @param searchRequest - searchRequest containing search parameters
-     * @return SearchResponse - response from elastic search db
+     * @return SearchResponse - response from Open search db
      */
     SearchResponse<Object> search(SearchRequest searchRequest) throws IOException;
 
