@@ -3,8 +3,6 @@ package uk.gov.companieshouse.search.api.service.rest;
 
 import org.opensearch.client.opensearch.core.SearchRequest;
 import org.opensearch.client.opensearch.core.SearchResponse;
-import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateResponse;
 
 import java.io.IOException;
 
