@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.search.api.config;
 
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
+import org.apache.hc.core5.http.HttpHost;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5Transport;
@@ -45,7 +46,7 @@ public class OpenSearchConfig {
             );
         }
 
-        org.apache.hc.core5.http.HttpHost httpHost = new org.apache.hc.core5.http.HttpHost(endpoint.getHost(), endpoint.getPort());
+        HttpHost httpHost = new HttpHost(endpoint.getHost(), endpoint.getPort());
         ApacheHttpClient5Transport transport = ApacheHttpClient5TransportBuilder
                 .builder(httpHost)
                 .setMapper(new JacksonJsonpMapper())
