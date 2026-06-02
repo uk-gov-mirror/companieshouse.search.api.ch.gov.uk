@@ -1,10 +1,10 @@
 package uk.gov.companieshouse.search.api.config;
 
-import org.apache.http.HttpHost;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
-import org.opensearch.client.transport.OpenSearchTransport;
-import org.opensearch.client.transport.rest_client.RestClientTransport;
+import org.opensearch.client.transport.httpclient5.ApacheHttpClient5Transport;
+import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.gov.companieshouse.environment.EnvironmentReader;
@@ -25,7 +25,7 @@ public class OpenSearchConfig {
     }
 
     // These are currently pointing at the existing ES instance, will need to be updated in the configs for both
-    private static final String ALPHABETICAL_SEARCH_URL = "ELASTIC_SEARCH_URL";
+    private static final String ALPHABETICAL_SEARCH_URL = "OPEN_SEARCH_URL";
 
     @Bean
     public OpenSearchClient alphabeticalOpenSearchRestClient() {
@@ -45,14 +45,14 @@ public class OpenSearchConfig {
             );
         }
 
-        org.opensearch.client.RestClient restClient = org.opensearch.client.RestClient.builder(
-                new HttpHost(endpoint.getHost(), endpoint.getPort(), endpoint.getProtocol())
-        ).build();
-
-        OpenSearchTransport transport = new RestClientTransport(
-                restClient,
-                new JacksonJsonpMapper()
-        );
+        org.apache.hc.core5.http.HttpHost httpHost = new org.apache.hc.core5.http.HttpHost(endpoint.getHost(), endpoint.getPort());
+        ApacheHttpClient5Transport transport = ApacheHttpClient5TransportBuilder
+                .builder(httpHost)
+                .setMapper(new JacksonJsonpMapper())
+                .setHttpClientConfigCallback(
+                        HttpAsyncClientBuilder::disableContentCompression
+                )
+                .build();
 
         return new OpenSearchClient(transport);
     }

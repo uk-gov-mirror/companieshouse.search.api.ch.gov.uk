@@ -39,7 +39,7 @@ public abstract class AbstractOpenSearchRequest {
                 .requestId(requestId)
                 .orderedAlphakey(orderedAlphakey)
                 .build().getLogMap();
-        LoggingUtils.getLogger().info("Searching for best company match", logMap);
+        LoggingUtils.getLogger().info("Searching OpenSearch cluster for best company match", logMap);
 
         SearchRequest searchRequest = bestMatchSourceBuilder(
                 getSearchQuery().createOrderedAlphaKeySearchQuery(orderedAlphakey),
@@ -56,7 +56,7 @@ public abstract class AbstractOpenSearchRequest {
                 .requestId(requestId)
                 .orderedAlphakey(orderedAlphakey)
                 .build().getLogMap();
-        LoggingUtils.getLogger().info("Searching using alphakey prefix", logMap);
+        LoggingUtils.getLogger().info("Searching OpenSearch cluster using alphakey prefix", logMap);
 
         SearchRequest searchRequest = bestMatchSourceBuilder(
                 getSearchQuery().createOrderedAlphaKeyKeywordQuery(orderedAlphakey),
@@ -75,7 +75,7 @@ public abstract class AbstractOpenSearchRequest {
                 .requestId(requestId)
                 .orderedAlphakey(orderedAlphakey)
                 .build().getLogMap();
-        LoggingUtils.getLogger().info("Searching using orderedAlphaKey", logMap);
+        LoggingUtils.getLogger().info("Searching OpenSearch cluster using orderedAlphaKey", logMap);
 
 
         // Consider using corporateName instead of orderedAlphakey
@@ -101,7 +101,7 @@ public abstract class AbstractOpenSearchRequest {
                 .companyName(topHitCompanyName)
                 .size(String.valueOf(size))
                 .build().getLogMap();
-        LoggingUtils.getLogger().info("Retrieving the alphabetically descending results", logMap);
+        LoggingUtils.getLogger().info("Retrieving the alphabetically descending results from OpenSearch cluster", logMap);
 
 
         SearchRequest searchRequest = alphabeticalSearchRequest(orderedAlphakeyWithId,
@@ -123,7 +123,7 @@ public abstract class AbstractOpenSearchRequest {
                 .companyName(topHitCompanyName)
                 .size(String.valueOf(size))
                 .build().getLogMap();
-        LoggingUtils.getLogger().info("Retrieving the alphabetically ascending results", logMap);
+        LoggingUtils.getLogger().info("Retrieving the alphabetically ascending results from OpenSearch cluster", logMap);
 
         SearchRequest searchRequest = alphabeticalSearchRequest(orderedAlphakeyWithId,
                 getSearchQuery().createMatchAllQuery(), SortOrder.Asc, size);
@@ -181,8 +181,5 @@ public abstract class AbstractOpenSearchRequest {
                 )
                 .build();
     }
-
-
-
 
 }

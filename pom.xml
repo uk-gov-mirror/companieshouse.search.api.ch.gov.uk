@@ -69,11 +69,9 @@
 
         <environment-reader-library.version>3.0.3</environment-reader-library.version>
 
-        <spring-boot-dependencies.version>3.5.5</spring-boot-dependencies.version>
-        <spring-boot-maven-plugin.version>3.5.5</spring-boot-maven-plugin.version>
+        <spring-boot-dependencies.version>3.5.14</spring-boot-dependencies.version>
+        <spring-boot-maven-plugin.version>3.5.14</spring-boot-maven-plugin.version>
         <!-- version added to resolve CVE-2025-41249-->
-        <spring-core.version>6.2.11</spring-core.version>
-        <!-- version added to resolve CVE-2025-41248 -->
         <spring-security-core.version>6.5.4</spring-security-core.version>
 
         <skip.unit.tests>false</skip.unit.tests>
@@ -94,22 +92,6 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-        </dependency>
-        <!-- version added to resolve CVE-2025-41249-->
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-            <version>${spring-security-core.version}</version>
-        </dependency>
-        <!--Added to resolve CVE-2025-41248-->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>${spring-core.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -299,14 +281,15 @@
         <dependency>
             <groupId>org.opensearch.client</groupId>
             <artifactId>opensearch-java</artifactId>
-            <version>3.8.0</version>
-            <scope>compile</scope>
+            <version>3.0.0</version>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
         <dependency>
-            <groupId>org.opensearch.client</groupId>
-            <artifactId>opensearch-rest-client</artifactId>
-            <version>2.14.0</version>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.6.1</version>
+            <scope>compile</scope>
         </dependency>
 
 
