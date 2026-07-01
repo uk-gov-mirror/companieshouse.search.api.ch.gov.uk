@@ -15,6 +15,7 @@ import uk.gov.companieshouse.search.api.mapper.ApiToResponseMapper;
 import uk.gov.companieshouse.search.api.model.esdatamodel.Company;
 import uk.gov.companieshouse.search.api.model.response.ResponseObject;
 import uk.gov.companieshouse.search.api.model.response.ResponseStatus;
+import uk.gov.companieshouse.search.api.service.delete.alphabetical.AlphabeticalSearchDeleteService;
 import uk.gov.companieshouse.search.api.service.delete.primary.PrimarySearchDeleteService;
 
 import java.io.IOException;
@@ -28,12 +29,12 @@ public class CompanySearchController {
 
     private final ApiToResponseMapper apiToResponseMapper;
 
-    private final PrimarySearchDeleteService primarySearchDeleteService;
+    private final AlphabeticalSearchDeleteService primarySearchDeleteService;
     private final UpsertCompanyService upsertCompanyService;
 
 
     public CompanySearchController(ApiToResponseMapper apiToResponseMapper,
-            PrimarySearchDeleteService primarySearchDeleteService, UpsertCompanyService upsertCompanyService) {
+                                   AlphabeticalSearchDeleteService primarySearchDeleteService, UpsertCompanyService upsertCompanyService) {
         this.apiToResponseMapper = apiToResponseMapper;
         this.primarySearchDeleteService = primarySearchDeleteService;
         this.upsertCompanyService = upsertCompanyService;
@@ -60,13 +61,9 @@ public class CompanySearchController {
                     companyNumber));
         }
         else {
-            try{
-                responseObject = primarySearchDeleteService.deleteCompanyByNumber(companyNumber);
-                getLogger().info(String.format("Successfully deleted company [%s] ",
-                        companyNumber));
-            } catch (IOException ioException) {
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ioException.getMessage());
-            }
+            responseObject = primarySearchDeleteService.deleteCompany(companyNumber);
+            getLogger().info(String.format("Successfully deleted company [%s] ",
+                    companyNumber));
         }
         return apiToResponseMapper.map(responseObject);
     }

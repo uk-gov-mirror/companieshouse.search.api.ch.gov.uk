@@ -12,7 +12,7 @@ public class AlphabeticalSearchRequests extends AbstractSearchRequest {
     private final AlphabeticalSearchRestClientService searchRestClient;
     private final AlphabeticalSearchQueries alphabeticalSearchQueries;
 
-    private static final String INDEX = "ALPHABETICAL_SEARCH_INDEX";
+    private static final String INDEX = "ALPHABETICAL_OPEN_SEARCH_INDEX";
     private static final String RESULTS_SIZE = "ALPHABETICAL_SEARCH_RESULT_MAX";
 
     public AlphabeticalSearchRequests(
@@ -29,17 +29,17 @@ public class AlphabeticalSearchRequests extends AbstractSearchRequest {
     String getIndex() {
         return INDEX;
     }
-    
+
     @Override
     String getResultsSize() {
         return RESULTS_SIZE;
     }
-    
+
     @Override
     RestClientService getRestClientService() {
         return searchRestClient;
     }
-    
+
     @Override
     AbstractSearchQuery getSearchQuery() {
         return alphabeticalSearchQueries;

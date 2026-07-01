@@ -1,8 +1,7 @@
 package uk.gov.companieshouse.search.api.service.rest.impl;
 
 import org.opensearch.client.opensearch.OpenSearchClient;
-import org.opensearch.client.opensearch.core.SearchRequest;
-import org.opensearch.client.opensearch.core.SearchResponse;
+import org.opensearch.client.opensearch.core.*;
 
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.search.api.service.rest.OpenSearchRestClientService;
@@ -24,6 +23,15 @@ public class AlphabeticalOpenSearchRestClientService implements OpenSearchRestCl
     @Override
     public SearchResponse<Object> search(SearchRequest searchRequest) throws IOException {
         return alphabeticalOpenSearchClient.search(searchRequest, Object.class);
+    }
+
+    @Override
+    public UpdateResponse upsert(UpdateRequest updateRequest) throws IOException {
+        return alphabeticalOpenSearchClient.update(updateRequest, Object.class);
+    }
+
+    public DeleteResponse delete(DeleteRequest deleteRequest) throws IOException {
+        return alphabeticalOpenSearchClient.delete(deleteRequest);
     }
 
 }

@@ -1,2 +1,2 @@
 search:
-  backend: opensearch   # "opensearch" or "elasticsearch"
+  backend: elasticsearch   # "opensearch" or "elasticsearch"
