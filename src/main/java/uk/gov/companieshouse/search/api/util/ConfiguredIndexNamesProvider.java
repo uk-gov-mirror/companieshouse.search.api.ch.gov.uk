@@ -6,7 +6,7 @@ import uk.gov.companieshouse.environment.EnvironmentReader;
 @Component
 public class ConfiguredIndexNamesProvider {
 
-    private static final String ALPHABETICAL_SEARCH_INDEX_ENVIRONMENT_VARIABLE = "ALPHABETICAL_OPEN_SEARCH_INDEX";
+    private static final String ALPHABETICAL_SEARCH_INDEX_ENVIRONMENT_VARIABLE = "ALPHABETICAL_SEARCH_INDEX";
     private static final String DISSOLVED_SEARCH_INDEX_ENVIRONMENT_VARIABLE = "DISSOLVED_SEARCH_INDEX";
     private static final String ADVANCED_SEARCH_INDEX_ENVIRONMENT_VARIABLE = "ADVANCED_SEARCH_INDEX";
     private static final String PRIMARY_SEARCH_INDEX_ENVIRONMENT_VARIABLE = "PRIMARY_SEARCH_INDEX";

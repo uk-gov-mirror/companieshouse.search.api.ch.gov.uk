@@ -106,10 +106,10 @@ public class AlphabeticalOpenSearchRequestService implements SearchRequestServic
                     results = prepareSearchResultsWithTopHit(size, requestId, logMap, topHitCompany, results,
                             orderedAlphakeyWithId, company);
                 } else if (searchAfter != null) {
-                    getLogger().info("Searching alphabetical companies after", logMap);
+                    getLogger().info("Searching OpenSearch alphabetical companies after", logMap);
                     results.addAll(populateBelowResults(requestId, topHitCompany.getCompanyName(), searchAfter, size));
                 } else {
-                    getLogger().info("Searching alphabetical companies before", logMap);
+                    getLogger().info("Searching OpenSearch alphabetical companies before", logMap);
                     results.addAll(populateAboveResults(requestId, topHitCompany.getCompanyName(), searchBefore, size));
                 }
             }

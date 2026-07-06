@@ -109,10 +109,10 @@ public class AlphabeticalSearchRequestService implements SearchRequestService<Co
                     results = prepareSearchResultsWithTopHit(size, requestId, logMap, topHitCompany, results,
                             orderedAlphakeyWithId, company);
                 } else if (searchAfter != null) {
-                    getLogger().info("Searching alphabetical companies after", logMap);
+                    getLogger().info("Searching Elasticsearch alphabetical companies after", logMap);
                     results.addAll(populateBelowResults(requestId, topHitCompany.getCompanyName(), searchAfter, size));
                 } else {
-                    getLogger().info("Searching alphabetical companies before", logMap);
+                    getLogger().info("Searching Elasticsearch alphabetical companies before", logMap);
                     results.addAll(populateAboveResults(requestId, topHitCompany.getCompanyName(), searchBefore, size));
                 }
             }

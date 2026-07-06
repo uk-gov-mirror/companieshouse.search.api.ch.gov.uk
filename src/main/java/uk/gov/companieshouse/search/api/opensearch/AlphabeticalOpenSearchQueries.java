@@ -20,7 +20,7 @@ public class AlphabeticalOpenSearchQueries extends AbstractOpenSearchQuery {
 
 
         System.err.println("*** Query is ***");
-        System.err.println(query);
+        System.err.println(query.toString());
 
         return query;
     }
@@ -29,16 +29,12 @@ public class AlphabeticalOpenSearchQueries extends AbstractOpenSearchQuery {
 
         LoggingUtils.getLogger().info("Creating Ordered Alpha Key Keyword Query for OpenSearch");
 
-        Query query = MatchQuery.of(m -> m
-                .field("items.ordered_alpha_key.keyword")
-                .query(FieldValue.of(orderedAlphaKey))
-        ).toQuery();
-
-        System.err.println("*** Query is ***");
-
-        System.err.println(query);
-
-        return query;
+        return Query.of(q -> q
+                .prefix(p -> p
+                        .field("items.ordered_alpha_key.keyword")
+                        .value(orderedAlphaKey)
+                )
+        );
     }
 
     public Query createStartsWithQuery(String corporateName) {
