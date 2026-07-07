@@ -13,48 +13,36 @@ public class AlphabeticalOpenSearchQueries extends AbstractOpenSearchQuery {
 
     public Query createOrderedAlphaKeySearchQuery(String orderedAlphaKey) {
 
-        LoggingUtils.getLogger().info("Creating Ordered Alpha Key Search Query for OpenSearch");
+        LoggingUtils.getLogger().info("Creating Ordered Alpha Key Search Query for OpenSearch - Query is MatchQuery");
 
         Query query = MatchQuery.of(m -> m
                 .field("items.ordered_alpha_key")
                 .query(FieldValue.of(orderedAlphaKey))
         ).toQuery();
 
-
-        System.err.println("*** Query is match***");
-        System.err.println(query);
-
         return query;
     }
 
     public Query createOrderedAlphaKeyKeywordQuery(String orderedAlphaKey) {
 
-        LoggingUtils.getLogger().info("Creating Ordered Alpha Key Keyword Query for OpenSearch");
-
+        LoggingUtils.getLogger().info("Creating Ordered Alpha Key Keyword Query for OpenSearch - Query is PrefixQuery");
 
         Query query = PrefixQuery.of(p -> p
                 .field("items.ordered_alpha_key.keyword")
                 .value(orderedAlphaKey)
         ).toQuery();
 
-        System.err.println("*** Query is prefix***");
-
-        System.err.println(query);
-
         return query;
     }
 
     public Query createStartsWithQuery(String corporateName) {
 
-        LoggingUtils.getLogger().info("Creating Starts With Query for OpenSearch");
+        LoggingUtils.getLogger().info("Creating Starts With Query for OpenSearch - Query is MatchPhrasePrefixQuery");
 
         Query query = MatchPhrasePrefixQuery.of(mpp -> mpp
                         .field("items.corporate_name.startswith")
                         .query(corporateName)
                 ).toQuery();
-
-        System.err.println("*** Query is matchPhrasePrefix***");
-        System.err.println(query);
 
         return query;
     }
