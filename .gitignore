@@ -58,3 +58,7 @@ override.tf.json
 # Vim files
 *.vim
 .*.sw?
+
+ # macOS
+ .DS_Store
+ **/ .DS_Store
